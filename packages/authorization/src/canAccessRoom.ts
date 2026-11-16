@@ -15,6 +15,10 @@ async function canAccessPublicRoom(user?: IUser): Promise<boolean> {
 	return Authorization.hasPermission(user, 'view-c-room');
 }
 
+async function isBannedFromRoom(roomId: IRoom['_id'], user?: IUser): Promise<boolean> {
+	return Boolean(user?._id && (await Subscriptions.findOneBannedSubscription(roomId, user._id)));
+}
+
 type RoomAccessValidatorConverted = (
 	room?: Pick<IRoom, '_id' | 't' | 'teamId' | 'prid' | 'abacAttributes'>,
 	user?: IUser,
@@ -31,8 +35,7 @@ const roomAccessValidators: RoomAccessValidatorConverted[] = [
 			return false;
 		}
 
-		// if user is banned from this room, deny access
-		if (user?._id && (await Subscriptions.findOneBannedSubscription(room._id, user._id))) {
+		if (await isBannedFromRoom(room._id, user)) {
 			return false;
 		}
 
@@ -58,8 +61,7 @@ const roomAccessValidators: RoomAccessValidatorConverted[] = [
 			return false;
 		}
 
-		// if user is banned from this room, deny access
-		if (user?._id && (await Subscriptions.findOneBannedSubscription(room._id, user._id))) {
+		if (await isBannedFromRoom(room._id, user)) {
 			return false;
 		}
 
