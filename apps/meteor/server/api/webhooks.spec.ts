@@ -172,6 +172,19 @@ describe('Webhooks API', () => {
 			expect(mockProcessWebhookMessage).not.toHaveBeenCalled();
 		});
 
+		it('answers 404 without looking anything up when the url carries no token', async () => {
+			// Arrange
+			const urlWithoutToken = '/hooks/integration-id';
+
+			// Act
+			const response = await request(app).post(urlWithoutToken).send({ text: 'hello' });
+
+			// Assert
+			expect(response.statusCode).toBe(404);
+			expect(mockIntegrations.findOneByIdAndToken).not.toHaveBeenCalled();
+			expect(mockProcessWebhookMessage).not.toHaveBeenCalled();
+		});
+
 		it('rejects the request when the integration has no assigned user', async () => {
 			mockUsers.findOneById.mockResolvedValue(null);
 
