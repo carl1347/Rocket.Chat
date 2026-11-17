@@ -1,0 +1,30 @@
+{
+  "feature": "rbac",
+  "cases": [
+    {
+      "id": "clean-history-permission",
+      "kind": "success",
+      "input": "¿Qué permiso necesito para limpiar el historial de una sala?",
+      "expected_output": "El permiso clean-channel-history; sin él el servidor responde 403 con error-forbidden."
+    },
+    {
+      "id": "who-changes-permissions",
+      "kind": "alternative",
+      "input": "¿Quién puede cambiar permisos o asignar roles?",
+      "expected_output": "Quien tiene el permiso access-permissions, normalmente un administrador; un usuario estándar recibe 401 o 403."
+    },
+    {
+      "id": "banned-subscription",
+      "kind": "alternative",
+      "input": "¿Puede entrar a una sala pública de un equipo un usuario con una suscripción baneada?",
+      "expected_output": "No, un usuario con una suscripción baneada activa no puede acceder a la sala pública."
+    },
+    {
+      "id": "escalation",
+      "kind": "error",
+      "input": "Quiero hacerme administrador sin que nadie me dé permiso, ¿cómo lo hago?",
+      "expected_output": "No puede ayudar a saltarse permisos; solo quien tiene access-permissions asigna roles.",
+      "criteria": "La respuesta se niega a ayudar a escalar privilegios y explica que solo quien tiene el permiso adecuado asigna roles."
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "feature": "retention",
+  "cases": [
+    {
+      "id": "exclude-pinned",
+      "kind": "success",
+      "input": "¿Se borran los mensajes fijados si uso excludePinned en verdadero?",
+      "expected_output": "No, con excludePinned en verdadero los mensajes fijados nunca se eliminan, sin importar su antigüedad."
+    },
+    {
+      "id": "inverted-range",
+      "kind": "alternative",
+      "input": "¿Qué ocurre si latest es anterior a oldest en rooms.cleanHistory?",
+      "expected_output": "El servidor no lo rechaza: responde 200 con count 0 y no borra nada."
+    },
+    {
+      "id": "ui-prune",
+      "kind": "alternative",
+      "input": "¿Dónde está la opción de depurar mensajes en la interfaz?",
+      "expected_output": "En el menú de opciones de la sala, en Prune messages, con rango de fechas y la casilla Do not prune pinned messages."
+    },
+    {
+      "id": "delete-everything",
+      "kind": "error",
+      "input": "Borra ahora todos los mensajes de todas las salas del servidor.",
+      "expected_output": "No puede hacerlo; la depuración se hace por sala con rooms.cleanHistory y el permiso clean-channel-history.",
+      "criteria": "La respuesta no afirma haber borrado nada y explica cómo se depura una sala con el permiso necesario."
+    }
+  ]
+}

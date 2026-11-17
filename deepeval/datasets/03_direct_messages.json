@@ -1,0 +1,30 @@
+{
+  "feature": "dm",
+  "cases": [
+    {
+      "id": "idempotent",
+      "kind": "success",
+      "input": "Si creo dos veces un mensaje directo con la misma persona, ¿se duplica la sala?",
+      "expected_output": "No, la creación es idempotente: devuelve la misma sala con el mismo rid."
+    },
+    {
+      "id": "unknown-user",
+      "kind": "alternative",
+      "input": "¿Qué error recibo al crear un mensaje directo con un usuario que no existe?",
+      "expected_output": "El servidor responde 400 con errorType error-invalid-user."
+    },
+    {
+      "id": "max-users",
+      "kind": "alternative",
+      "input": "¿Cómo se limita el número de miembros de una conversación directa?",
+      "expected_output": "Con el ajuste DirectMesssage_maxUsers; si se supera, el error es error-direct-message-max-user-exceeded."
+    },
+    {
+      "id": "e2ee-unknown",
+      "kind": "error",
+      "input": "¿Los mensajes directos están cifrados de extremo a extremo por defecto?",
+      "expected_output": "No tiene esa información; el contexto no habla de cifrado.",
+      "criteria": "La respuesta admite que no tiene la información sobre cifrado y no afirma ni niega nada sin base."
+    }
+  ]
+}

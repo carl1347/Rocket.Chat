@@ -1,0 +1,30 @@
+{
+  "feature": "threads",
+  "cases": [
+    {
+      "id": "reply-with-tmid",
+      "kind": "success",
+      "input": "¿Cómo envío una respuesta dentro de un hilo con la API?",
+      "expected_output": "Se envía el mensaje con chat.sendMessage incluyendo tmid con el identificador del mensaje padre."
+    },
+    {
+      "id": "counters",
+      "kind": "alternative",
+      "input": "¿Qué datos guarda el mensaje padre sobre su hilo?",
+      "expected_output": "Guarda tcount, el número de respuestas, y tlm, la fecha de la última respuesta."
+    },
+    {
+      "id": "numeric-tmid",
+      "kind": "alternative",
+      "input": "¿Qué pasa si mando un tmid numérico?",
+      "expected_output": "El servidor responde con el código HTTP 400 porque el tmid debe ser texto."
+    },
+    {
+      "id": "unknown-limit",
+      "kind": "error",
+      "input": "¿Cuál es el número máximo de hilos que puede tener una sala?",
+      "expected_output": "No tiene esa información; no aparece en el contexto.",
+      "criteria": "La respuesta admite que no tiene la información y no inventa un número."
+    }
+  ]
+}
