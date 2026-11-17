@@ -1,5 +1,6 @@
 import { Authorization, Settings } from '@rocket.chat/core-services';
-import type { IUser } from '@rocket.chat/core-typings';
+import { TeamType } from '@rocket.chat/core-typings';
+import type { IRoom, ISubscription, ITeam, IUser } from '@rocket.chat/core-typings';
 import { mockModel } from '@rocket.chat/models/testing';
 
 import { canAccessRoom } from './canAccessRoom';
@@ -26,13 +27,22 @@ jest.mock('./canAccessRoomLivechat', () => ({
 }));
 
 const findOneUserById = jest.fn();
+const findOneBannedSubscription = jest.fn();
+const countSubscriptionsByRoomIdAndUserId = jest.fn();
+const findOneTeamById = jest.fn();
+const findOneTeamMember = jest.fn();
 const hasPermission = jest.mocked(Authorization.hasPermission);
 const getSetting = jest.mocked(Settings.get);
 
 describe('canAccessRoom', () => {
 	beforeAll(() => {
-		mockModel('Subscriptions', { findOneBannedSubscription: jest.fn(), countByRoomIdAndUserId: jest.fn() });
+		mockModel('Subscriptions', {
+			findOneBannedSubscription,
+			countByRoomIdAndUserId: countSubscriptionsByRoomIdAndUserId,
+		});
 		mockModel('Users', { findOneById: findOneUserById });
+		mockModel('Team', { findOneById: findOneTeamById });
+		mockModel('TeamMember', { findOneByUserIdAndTeamId: findOneTeamMember });
 	});
 
 	beforeEach(() => {
@@ -43,6 +53,10 @@ describe('canAccessRoom', () => {
 		hasPermission.mockResolvedValue(false);
 		getSetting.mockResolvedValue(false);
 		jest.mocked(canAccessRoomLivechat).mockResolvedValue(false);
+		findOneBannedSubscription.mockResolvedValue(null);
+		countSubscriptionsByRoomIdAndUserId.mockResolvedValue(0);
+		findOneTeamById.mockResolvedValue(null);
+		findOneTeamMember.mockResolvedValue(null);
 	});
 
 	describe('user hydration', () => {
@@ -92,6 +106,73 @@ describe('canAccessRoom', () => {
 
 			expect(findOneUserById).not.toHaveBeenCalled();
 			expect(result).toBe(false);
+		});
+	});
+
+	describe('public rooms of a team', () => {
+		const user = { _id: 'user-id', username: 'john.doe' } as IUser;
+		const teamRoom: Pick<IRoom, '_id' | 't' | 'teamId'> = { _id: 'room-id', t: 'c', teamId: 'team-id' };
+		const bannedSubscription = { _id: 'sub-id', rid: 'room-id', status: 'BANNED' } as unknown as ISubscription;
+
+		beforeEach(() => {
+			// the team is public and the user holds view-c-room, so only the ban can deny access
+			findOneTeamById.mockResolvedValue({ _id: 'team-id', type: TeamType.PUBLIC } as ITeam);
+			hasPermission.mockResolvedValue(true);
+		});
+
+		it('should deny access when the user has an active banned subscription in the room', async () => {
+			// Arrange
+			findOneBannedSubscription.mockResolvedValue(bannedSubscription);
+
+			// Act
+			const result = await canAccessRoom(teamRoom, user);
+
+			// Assert
+			expect(result).toBe(false);
+			expect(findOneBannedSubscription).toHaveBeenCalledWith('room-id', 'user-id');
+			expect(findOneTeamById).not.toHaveBeenCalled();
+		});
+
+		it('should allow access when the user has no banned subscription and can view public rooms', async () => {
+			// Arrange
+			findOneBannedSubscription.mockResolvedValue(null);
+
+			// Act
+			const result = await canAccessRoom(teamRoom, user);
+
+			// Assert
+			expect(result).toBe(true);
+			expect(findOneBannedSubscription).toHaveBeenCalledWith('room-id', 'user-id');
+			expect(hasPermission).toHaveBeenCalledWith(user, 'view-c-room');
+		});
+
+		it('should not look for a banned subscription for an anonymous visitor', async () => {
+			// Arrange
+			getSetting.mockResolvedValue(true);
+
+			// Act
+			const result = await canAccessRoom(teamRoom, undefined);
+
+			// Assert
+			expect(result).toBe(true);
+			expect(findOneBannedSubscription).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('public rooms without a team', () => {
+		const user = { _id: 'user-id', username: 'john.doe' } as IUser;
+
+		it('should deny access when the user has an active banned subscription in the room', async () => {
+			// Arrange
+			hasPermission.mockResolvedValue(true);
+			findOneBannedSubscription.mockResolvedValue({ _id: 'sub-id', rid: 'room-id' } as unknown as ISubscription);
+
+			// Act
+			const result = await canAccessRoom({ _id: 'room-id', t: 'c' }, user);
+
+			// Assert
+			expect(result).toBe(false);
+			expect(findOneBannedSubscription).toHaveBeenCalledWith('room-id', 'user-id');
 		});
 	});
 });

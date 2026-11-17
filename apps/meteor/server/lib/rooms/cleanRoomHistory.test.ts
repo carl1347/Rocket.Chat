@@ -91,6 +91,68 @@ describe('cleanRoomHistory', () => {
 		expect(broadcastMock.getCalls().map((call) => call.args[2].ids)).to.deep.equal(batches);
 	});
 
+	describe('pinned messages', () => {
+		const lastCallArgs = (stub: sinon.SinonStub) => stub.lastCall.args;
+
+		// The pinned flag is the 2nd argument of every message selector; the model turns it into `pinned: { $ne: true }`.
+		it('asks every selector to exclude pinned messages whatever their age when excludePinned is true', async () => {
+			// Arrange
+			const veryOld = new Date('2001-01-01T00:00:00Z');
+			modelsMock.Messages.findByIdPinnedTimestampLimitAndUsers.onCall(0).resolves(['old-unpinned']);
+
+			// Act
+			await cleanRoomHistory({ rid: 'rid', excludePinned: true, oldest: new Date(0), latest: veryOld });
+
+			// Assert
+			expect(lastCallArgs(modelsMock.Messages.findFilesByRoomIdPinnedTimestampAndUsers)[1]).to.equal(true);
+			expect(lastCallArgs(modelsMock.Messages.findByIdPinnedTimestampLimitAndUsers)[1]).to.equal(true);
+			expect(lastCallArgs(modelsMock.Messages.removeByIdPinnedTimestampLimitAndUsers)[1]).to.equal(true);
+			expect(lastCallArgs(modelsMock.Messages.removeByIdPinnedTimestampLimitAndUsers)[3]).to.deep.equal({
+				$gte: new Date(0),
+				$lte: veryOld,
+			});
+		});
+
+		it('excludes pinned messages by default', async () => {
+			// Arrange
+			modelsMock.Messages.findByIdPinnedTimestampLimitAndUsers.onCall(0).resolves(['a']);
+
+			// Act
+			await cleanRoomHistory({ rid: 'rid' });
+
+			// Assert
+			expect(lastCallArgs(modelsMock.Messages.findByIdPinnedTimestampLimitAndUsers)[1]).to.equal(true);
+			expect(lastCallArgs(modelsMock.Messages.removeByIdPinnedTimestampLimitAndUsers)[1]).to.equal(true);
+		});
+
+		it('lets pinned messages be selected when excludePinned is false', async () => {
+			// Arrange
+			modelsMock.Messages.findByIdPinnedTimestampLimitAndUsers.onCall(0).resolves(['a']);
+
+			// Act
+			await cleanRoomHistory({ rid: 'rid', excludePinned: false });
+
+			// Assert
+			expect(lastCallArgs(modelsMock.Messages.findByIdPinnedTimestampLimitAndUsers)[1]).to.equal(false);
+			expect(lastCallArgs(modelsMock.Messages.removeByIdPinnedTimestampLimitAndUsers)[1]).to.equal(false);
+		});
+	});
+
+	it('looks up the room as a discussion after pruning and tolerates it not being one', async () => {
+		// Arrange
+		modelsMock.Messages.findByIdPinnedTimestampLimitAndUsers.onCall(0).resolves(['a']);
+		modelsMock.Messages.getLastVisibleUserMessageSentByRoomId.resolves(null);
+		modelsMock.Rooms.findOneDiscussionById.reset();
+		modelsMock.Rooms.findOneDiscussionById.resolves(null);
+
+		// Act
+		const count = await cleanRoomHistory({ rid: 'discussion-rid' });
+
+		// Assert
+		expect(count).to.equal(1);
+		expect(modelsMock.Rooms.findOneDiscussionById.calledOnceWith('discussion-rid')).to.be.true;
+	});
+
 	it('keeps read receipts of selected messages that the delete spared', async () => {
 		modelsMock.Messages.findByIdPinnedTimestampLimitAndUsers.onCall(0).resolves(['deleted', 'pinnedMeanwhile']);
 		modelsMock.Messages.removeByIdPinnedTimestampLimitAndUsers.resolves({ count: 1, deletedIds: ['deleted'] });

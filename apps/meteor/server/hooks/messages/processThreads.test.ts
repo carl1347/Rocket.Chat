@@ -11,15 +11,18 @@ const modelsMock = { Messages: { findOneById: sinon.stub() } };
 const getMentionsMock = sinon.stub();
 const replyMock = sinon.stub();
 const callbacksRunAsyncMock = sinon.stub();
+const updateThreadUsersSubscriptionsMock = sinon.stub();
+const sendMessageNotificationsMock = sinon.stub();
+const notifyOnMessageChangeMock = sinon.stub();
 
 const { processThreads } = p.noCallThru().load('./processThreads.ts', {
-	'./notifyUsersOnMessage': { updateThreadUsersSubscriptions: sinon.stub(), getMentions: getMentionsMock },
-	'./sendNotificationsOnMessage': { sendMessageNotifications: sinon.stub() },
+	'./notifyUsersOnMessage': { updateThreadUsersSubscriptions: updateThreadUsersSubscriptionsMock, getMentions: getMentionsMock },
+	'./sendNotificationsOnMessage': { sendMessageNotifications: sendMessageNotificationsMock },
 	'../../lib/callbacks': {
 		callbacks: { runAsync: callbacksRunAsyncMock, add: sinon.stub(), remove: sinon.stub(), priority: { LOW: 'low' } },
 	},
 	'../../lib/messaging/threads/functions': { reply: replyMock },
-	'../../lib/notifyListener': { notifyOnMessageChange: sinon.stub() },
+	'../../lib/notifyListener': { notifyOnMessageChange: notifyOnMessageChangeMock },
 	'../../settings': { settings: { watch: sinon.stub() } },
 });
 
@@ -38,10 +41,55 @@ describe('processThreads', () => {
 	beforeEach(() => {
 		callbacksRunAsyncMock.reset();
 		replyMock.reset();
+		updateThreadUsersSubscriptionsMock.reset();
+		sendMessageNotificationsMock.reset();
+		notifyOnMessageChangeMock.reset();
 		modelsMock.Messages.findOneById.reset();
 		modelsMock.Messages.findOneById.resolves(parentMessage);
 		getMentionsMock.reset();
 		getMentionsMock.resolves({ mentionIds: [] });
+	});
+
+	const expectNoThreadSideEffects = () => {
+		expect(replyMock.called).to.be.false;
+		expect(updateThreadUsersSubscriptionsMock.called).to.be.false;
+		expect(sendMessageNotificationsMock.called).to.be.false;
+		expect(notifyOnMessageChangeMock.called).to.be.false;
+		expect(callbacksRunAsyncMock.called).to.be.false;
+	};
+
+	describe('when there is no thread to update', () => {
+		it('should return the message untouched and skip the parent lookup when it has no tmid', async () => {
+			// Arrange
+			const message = createFakeMessage({ rid: room._id, u: author });
+			const snapshot = structuredClone(message);
+
+			// Act
+			const result = await processThreads(message, room);
+
+			// Assert
+			expect(result).to.equal(message);
+			expect(result).to.deep.equal(snapshot);
+			expect(modelsMock.Messages.findOneById.called).to.be.false;
+			expectNoThreadSideEffects();
+		});
+
+		it('should return the message untouched and leave the thread counters alone when the parent does not exist', async () => {
+			// Arrange
+			const message = threadReply({ tmid: 'missing-parent' });
+			const snapshot = structuredClone(message);
+			modelsMock.Messages.findOneById.resolves(null);
+
+			// Act
+			const result = await processThreads(message, room);
+
+			// Assert
+			expect(modelsMock.Messages.findOneById.calledOnceWithExactly('missing-parent')).to.be.true;
+			expect(result).to.equal(message);
+			expect(result).to.deep.equal(snapshot);
+			expect(result).to.not.have.property('tcount');
+			expectNoThreadSideEffects();
+		});
 	});
 
 	it('should mark the thread as read for the author of the reply', async () => {

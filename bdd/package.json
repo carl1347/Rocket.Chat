@@ -1,0 +1,32 @@
+{
+	"name": "rocketchat-bdd-screenplay",
+	"private": true,
+	"version": "1.0.0",
+	"description": "Gherkin + Cucumber + Screenplay (Serenity/JS) E2E suites for 5 Rocket.Chat features",
+	"scripts": {
+		"test": "cucumber-js",
+		"test:threads": "cucumber-js features/01_threads.feature",
+		"test:rbac": "cucumber-js features/02_rbac_permissions.feature",
+		"test:dm": "cucumber-js features/03_direct_messages.feature",
+		"test:retention": "cucumber-js features/04_data_retention.feature",
+		"test:webhooks": "cucumber-js features/05_webhooks_integrations.feature",
+		"test:dry": "cucumber-js --dry-run",
+		"test:report": "serenity-bdd update && serenity-bdd run --features ./features",
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@cucumber/cucumber": "12.0.0",
+		"@serenity-js/assertions": "3.49.0",
+		"@serenity-js/console-reporter": "3.49.0",
+		"@serenity-js/core": "3.49.0",
+		"@serenity-js/cucumber": "3.49.0",
+		"@serenity-js/playwright": "3.49.0",
+		"@serenity-js/rest": "3.49.0",
+		"@serenity-js/serenity-bdd": "3.49.0",
+		"@serenity-js/web": "3.49.0",
+		"@types/node": "22.10.2",
+		"playwright-core": "1.64.0",
+		"ts-node": "10.9.2",
+		"typescript": "5.6.3"
+	}
+}

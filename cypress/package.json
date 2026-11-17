@@ -1,0 +1,23 @@
+{
+	"name": "rocketchat-cypress-tests",
+	"private": true,
+	"version": "1.0.0",
+	"description": "Cypress E2E (UI) and REST API suites for 5 Rocket.Chat features",
+	"scripts": {
+		"cypress:open": "cypress open --e2e",
+		"cypress:run": "cypress run",
+		"test": "cypress run",
+		"test:threads": "cypress run --spec e2e/01_threads.cy.ts",
+		"test:rbac": "cypress run --spec e2e/02_rbac_permissions.cy.ts",
+		"test:dm": "cypress run --spec e2e/03_direct_messages.cy.ts",
+		"test:retention": "cypress run --spec e2e/04_data_retention.cy.ts",
+		"test:webhooks": "cypress run --spec e2e/05_webhooks_integrations.cy.ts",
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@testing-library/cypress": "10.0.2",
+		"@testing-library/dom": "10.4.0",
+		"cypress": "13.17.0",
+		"typescript": "5.6.3"
+	}
+}

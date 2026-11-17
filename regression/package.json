@@ -1,0 +1,46 @@
+{
+	"name": "rocketchat-regression-tests",
+	"private": true,
+	"version": "1.0.0",
+	"type": "module",
+	"description": "Regression suites (API, security, performance) for 5 Rocket.Chat features",
+	"engines": { "node": ">=24.15.0" },
+	"scripts": {
+		"test": "node scripts/run.mjs --type all --feature all",
+		"test:api": "node scripts/run.mjs --type api --feature all",
+		"test:security": "node scripts/run.mjs --type security --feature all",
+		"test:perf": "node scripts/run.mjs --type performance --feature all",
+
+		"test:threads": "node scripts/run.mjs --type all --feature threads",
+		"test:rbac": "node scripts/run.mjs --type all --feature rbac",
+		"test:dm": "node scripts/run.mjs --type all --feature dm",
+		"test:retention": "node scripts/run.mjs --type all --feature retention",
+		"test:webhooks": "node scripts/run.mjs --type all --feature webhooks",
+
+		"test:api:threads": "node scripts/run.mjs --type api --feature threads",
+		"test:api:rbac": "node scripts/run.mjs --type api --feature rbac",
+		"test:api:dm": "node scripts/run.mjs --type api --feature dm",
+		"test:api:retention": "node scripts/run.mjs --type api --feature retention",
+		"test:api:webhooks": "node scripts/run.mjs --type api --feature webhooks",
+
+		"test:security:threads": "node scripts/run.mjs --type security --feature threads",
+		"test:security:rbac": "node scripts/run.mjs --type security --feature rbac",
+		"test:security:dm": "node scripts/run.mjs --type security --feature dm",
+		"test:security:retention": "node scripts/run.mjs --type security --feature retention",
+		"test:security:webhooks": "node scripts/run.mjs --type security --feature webhooks",
+
+		"test:perf:threads": "node scripts/run.mjs --type performance --feature threads",
+		"test:perf:rbac": "node scripts/run.mjs --type performance --feature rbac",
+		"test:perf:dm": "node scripts/run.mjs --type performance --feature dm",
+		"test:perf:retention": "node scripts/run.mjs --type performance --feature retention",
+		"test:perf:webhooks": "node scripts/run.mjs --type performance --feature webhooks",
+
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@types/autocannon": "7.12.7",
+		"@types/node": "22.10.2",
+		"autocannon": "9.0.0",
+		"typescript": "5.6.3"
+	}
+}
